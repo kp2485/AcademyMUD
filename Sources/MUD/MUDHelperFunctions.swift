@@ -99,7 +99,7 @@ func whisperMessage(to targetPlayerName: String, message: String, session: Sessi
         return [MudResponse(session: session, message: "Player not found in session.")]
     }
     
-    guard let targetPlayer = await User.filter(where: {$0.username == targetPlayerName}).first else {
+    guard let targetPlayer = await User.filter(where: {$0.username.uppercased() == targetPlayerName.uppercased()}).first else {
         return [MudResponse(session: session, message: "\(targetPlayerName) is not currently online.")]
     }
     

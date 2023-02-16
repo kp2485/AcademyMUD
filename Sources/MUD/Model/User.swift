@@ -15,20 +15,21 @@ struct User: DBType {
     let hashedPassword: String
     var currentRoomID: UUID?
     
-    init(id: UUID? = nil, username: String, password: String) {
+    init(id: UUID? = nil, username: String, password: String, currentRoomID: UUID? = nil) {
         self.id = id ?? UUID()
         self.username = username
+        self.currentRoomID = currentRoomID
         
-        self.hashedPassword = Hasher.hash(password + username)
+        self.hashedPassword = Hasher.hash(password + username.uppercased())
     }
     
     // Use a throwing function to check if user already exists with this username.
-    static func create(username: String, password: String) async throws -> User {
+    static func create(username: String, password: String, currentRoomID: UUID? = nil) async throws -> User {
         guard await User.first(username: username) == nil else {
             throw UserError.usernameAlreadyTaken
         }
         
-        let player = User(id: UUID(), username: username, password: password)
+        let player = User(id: UUID(), username: username, password: password, currentRoomID: currentRoomID)
         await player.save()
         return player
     }
@@ -38,7 +39,7 @@ struct User: DBType {
             throw UserError.userNotFound
         }
         
-        guard Hasher.verify(password: password + username, hashedPassword: user.hashedPassword) else {
+        guard Hasher.verify(password: password + username.uppercased(), hashedPassword: user.hashedPassword) else {
             throw UserError.passwordMismatch
         }
         
@@ -46,7 +47,7 @@ struct User: DBType {
     }
     
     static func first(username: String) async -> User? {
-        await allUsers.first(where: { $0.username == username })
+        await allUsers.first(where: { $0.username.uppercased() == username.uppercased() })
     }
     
     static func find(_ id: UUID?) async -> User? {
@@ -75,9 +76,3 @@ enum UserError: Error {
     case userNotFound
     case passwordMismatch
 }
-
-
-
-// let player = await User.find(id: playerID)
-
-// static func find(id: UUID) async -> User?
