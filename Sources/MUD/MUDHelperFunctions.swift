@@ -16,7 +16,12 @@ func look(session: Session) async -> [MudResponse] {
         return [MudResponse(session: session, message: "Could not find room with roomID \(roomID).\n")]
     }
     
-    return [MudResponse(session: session, message: room.formattedDescription)]
+    let otherPlayersInRoom = await User.filter(where: {$0.currentRoomID == roomID})
+        .filter({$0.id != user.id})
+    
+    let playerString = "Players:\n" + otherPlayersInRoom.map {$0.username}.joined(separator: ", ")
+    
+    return [MudResponse(session: session, message: room.formattedDescription + "\n" + playerString)]
 }
 
 
@@ -25,7 +30,7 @@ func createUser(session: Session, username: String, password: String) async -> [
     let response: MudResponse
     
     do {
-        let newUser = try await User.create(username: username, password: password)
+        let newUser = try await User.create(username: username, password: password, currentRoomID: Room.starterRoomID)
         updatedSession.playerID = newUser.id
         response = MudResponse(session: updatedSession, message: "Welcome, \(newUser.username)!")
     } catch {
